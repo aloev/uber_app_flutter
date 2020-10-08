@@ -29,7 +29,7 @@ class MiUbicacionBloc extends Bloc<MiUbicacionEvent, MiUbicacionState> {
 
     ).listen((Geolocator.Position position) { 
 
-      print(position);   //En este punto ya conozco mi ubicacion actual
+      // print(position);   //En este punto ya conozco mi ubicacion actual
 
       final newLocacion = new LatLng(position.latitude, position.longitude);
 
@@ -50,7 +50,7 @@ class MiUbicacionBloc extends Bloc<MiUbicacionEvent, MiUbicacionState> {
   Stream<MiUbicacionState> mapEventToState( MiUbicacionEvent event, ) async* {
     
     if( event is OnUbicacionCambio){
-      print(event);
+      // print(event);
       yield state.copyWith(
         existeUbicacion: true,
         ubicacion: event.ubicacion
