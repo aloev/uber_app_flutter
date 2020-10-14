@@ -18,7 +18,7 @@ class MapaBloc extends Bloc<MapaEvent, MapaState> {
   // Controlador del Mapa
   GoogleMapController _mapController;
 
-  // Polylines
+  // Polylines -- Una que siempre sigue, Otra apenas Click
 
   Polyline _miRuta = new Polyline(
     polylineId: PolylineId('mi_ruta') ,
@@ -33,7 +33,7 @@ class MapaBloc extends Bloc<MapaEvent, MapaState> {
   );
 
 
-
+  // Inicia Mapa Style Uber
   void initMapa( GoogleMapController controller){
 
     if( !state.mapaListo ){
@@ -47,7 +47,7 @@ class MapaBloc extends Bloc<MapaEvent, MapaState> {
 
     }
   }
-
+  // Le asigna al controller de Google el nuevo destino
   void moverCamara( LatLng destino ){
     
     final cameraUpdate = CameraUpdate.newLatLng(destino);
@@ -64,12 +64,13 @@ class MapaBloc extends Bloc<MapaEvent, MapaState> {
     
     } else if( event is OnNuevaUbicacion ){
 
-      // Regrese la ultima linea( la emision en lugar de todo el Stream)
+      // Regrese Todos puntos + Nueva Ubicacion => Propiedad Polyline
 
       yield* this._onNuevaUbicacion(event);
     
     } else if( event is OnMarcarRecorrido ){
 
+        // Cambiar color a _miRuta que es la q me sigue always
       yield* _onMarcarRecorrido(event);
       
     } else if ( event is OnSeguirUbicacion){
@@ -122,7 +123,7 @@ class MapaBloc extends Bloc<MapaEvent, MapaState> {
       }
 
 
-      // Armo puntos viejos mas Nuevos
+      // Armo puntos viejos mas Nuevos - Polyline + Nueva Ubicacion
       final points = [ ...this._miRuta.points, event.ubicacion ];
       
       // Creo una COPIA de estos Mismos
@@ -134,11 +135,13 @@ class MapaBloc extends Bloc<MapaEvent, MapaState> {
       // Reescribo los puntos RESULTANDES a mi Polyline
       currentPolylines['mi_ruta'] = this._miRuta;
 
+      // Regresa puntos Antiguos + nuevaUbicacion
       yield state.copyWith(polylines:currentPolylines );
   }
 
   Stream<MapaState> _onSeguirUbicacion(OnSeguirUbicacion event)async*{
       
+      // Revisar
       if( !state.seguirUbicacion){
         this.moverCamara(this._miRuta.points[this._miRuta.points.length-1]);
       }

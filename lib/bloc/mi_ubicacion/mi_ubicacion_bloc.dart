@@ -33,6 +33,8 @@ class MiUbicacionBloc extends Bloc<MiUbicacionEvent, MiUbicacionState> {
 
       final newLocacion = new LatLng(position.latitude, position.longitude);
 
+
+        // Le entrega al evento mi posicion ACTUAL
       add( OnUbicacionCambio( newLocacion ) );        // Dispara un Evento
     
     });
@@ -45,6 +47,8 @@ class MiUbicacionBloc extends Bloc<MiUbicacionEvent, MiUbicacionState> {
     this._positionSubscription?.cancel();
   }
 
+
+  // Reasignacion al Estado de La UBICACION hallada
 
   @override
   Stream<MiUbicacionState> mapEventToState( MiUbicacionEvent event, ) async* {

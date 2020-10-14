@@ -24,6 +24,8 @@ class BtnMiRuta extends StatelessWidget {
 
             // mapaBloc.moverCamara(destino);
 
+
+            // Disparo marcar Negro ruta
             mapaBloc.add(OnMarcarRecorrido());
 
           },

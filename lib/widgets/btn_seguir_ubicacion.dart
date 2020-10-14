@@ -38,6 +38,7 @@ class BtnSeguirUbicacion extends StatelessWidget {
 
                 // moverCamara(destino);
 
+                  // Disparo event de MapBloc
                 mapaBloc.add( OnSeguirUbicacion() );
 
               },

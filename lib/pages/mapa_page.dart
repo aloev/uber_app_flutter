@@ -38,6 +38,8 @@ class _MapaPageState extends State<MapaPage> {
       body: Stack(                            //stack de cartas
         children: [
           BlocBuilder<MiUbicacionBloc, MiUbicacionState>(
+
+            // Un builder para RENDERIZAR el mapa
             builder: (_, state) => crearMapa(state),
           ),
 
@@ -49,7 +51,9 @@ class _MapaPageState extends State<MapaPage> {
           MarcadorManual(),
         ],
       ),
-    
+
+
+        // Los 3 Botones en la Izquierda Abajo
       floatingActionButton: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
@@ -73,6 +77,7 @@ class _MapaPageState extends State<MapaPage> {
 
     // return Text('${ state.ubicacion.latitude},${ state.ubicacion.longitude  }');
 
+    // Se genera Ubicacion basado en mi locacion actual
     mapaBloc.add(OnNuevaUbicacion(state.ubicacion));
 
     
@@ -89,6 +94,7 @@ class _MapaPageState extends State<MapaPage> {
             myLocationButtonEnabled: false,
             zoomControlsEnabled: true,
 
+            // Se dispara al Bloc
             onMapCreated: mapaBloc.initMapa,
 
             // Esto llama el Bloc para hacer las Polylineas

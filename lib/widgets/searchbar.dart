@@ -6,6 +6,7 @@ class SearchBar extends StatelessWidget {
     @override
   Widget build(BuildContext context) {
 
+      // Mire como se hace referencia a un Bloc especìfico
     return BlocBuilder<BusquedaBloc, BusquedaState>(
       builder: (context, state) {
         if (state.seleccionManual){

@@ -12,7 +12,8 @@ class MapaState{
   final LatLng ubicacionCentral;
   
   final bool seguirUbicacion;
-  // Polylines
+
+  // Polylines  -- La mas importante
 
   final Map<String, Polyline > polylines;
 

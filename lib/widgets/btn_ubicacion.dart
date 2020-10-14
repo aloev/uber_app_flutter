@@ -24,6 +24,8 @@ class BtnUbicacion extends StatelessWidget {
           onPressed: (){
 
             final destino = miubicacionBloc.state.ubicacion;
+
+            // Disparo al Bloc
             mapaBloc.moverCamara(destino);
           },
         ),

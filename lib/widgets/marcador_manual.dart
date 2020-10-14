@@ -40,6 +40,8 @@ class _BuildMarcadorManual extends StatelessWidget {
               backgroundColor: Colors.white,
               child: IconButton(
                 icon: Icon(Icons.arrow_back,  color: Colors.black87,), 
+
+                // Desactiva manual, vuelve a busqueda Normal
                 onPressed: (){
                    context.bloc<BusquedaBloc>().add(OnDesctivarMarcadorManual());
                 }),
@@ -57,7 +59,7 @@ class _BuildMarcadorManual extends StatelessWidget {
           ),
         ),
 
-        // Confirmar Destino
+        // Confirmar Destino -- Boton negro Inferior
         Positioned(
           bottom: 70,
           left: 40,
@@ -81,33 +83,46 @@ class _BuildMarcadorManual extends StatelessWidget {
   }
 
 
+  // Funcion que calcula todo el recorrido a una posicion deseada.
+
   void calcularDestino( BuildContext context)async{
 
     calculandoAlerta(context);
 
+    // Dispara service para Api
     final trafficService = new TrafficService();
     final mapabloc = context.bloc<MapaBloc>();
     
     final inicio = context.bloc<MiUbicacionBloc>().state.ubicacion;   // Tenemos nuestra ultima ubicacion
+    
+
+    // Halla de donde sea que me haya parado para iniciar Busqueda
     final destino = mapabloc.state.ubicacionCentral;
 
     final trafficResponse = await trafficService.getCoordsInicioDestino(inicio, destino);
     
+
+    // Obtiene respuestas
     final geometry = trafficResponse.routes[0].geometry;
     final duracion = trafficResponse.routes[0].duration;
     final distancia = trafficResponse.routes[0].distance;
     // Decodificar los puntos del Geometry
 
     final points = Poly.Polyline.Decode(encodedString:geometry, precision: 6 ).decodedCoords;
+    
+    
+    // Arma Array
     final List<LatLng> rutaCoordenadas = points.map(
       (point) => LatLng(point[0], point[1])
     ).toList();
     
     
+    // Dispara Evento, manda nuevas coordenadas
     mapabloc.add( OncrearRutaInicioDestino(rutaCoordenadas,distancia,duracion ) );
 
-    Navigator.of(context).pop();
 
+    // Cierra y Desactiva
+    Navigator.of(context).pop();
     context.bloc<BusquedaBloc>().add(OnDesctivarMarcadorManual());
   }
 }
