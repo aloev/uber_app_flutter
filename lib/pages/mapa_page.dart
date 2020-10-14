@@ -35,8 +35,19 @@ class _MapaPageState extends State<MapaPage> {
 
 
     return Scaffold(
-      body: BlocBuilder<MiUbicacionBloc, MiUbicacionState>(
-        builder: (_, state) => crearMapa(state),
+      body: Stack(                            //stack de cartas
+        children: [
+          BlocBuilder<MiUbicacionBloc, MiUbicacionState>(
+            builder: (_, state) => crearMapa(state),
+          ),
+
+          
+          Positioned(
+            top: 15,
+            child: SearchBar()
+          ),
+          MarcadorManual(),
+        ],
       ),
     
       floatingActionButton: Column(
@@ -69,18 +80,29 @@ class _MapaPageState extends State<MapaPage> {
       target: state.ubicacion,
       zoom: 15
     );
+    
+    return BlocBuilder<MapaBloc, MapaState>(
+      builder: (context, _) {
+        return GoogleMap(
+            initialCameraPosition: posInicial ,
+            myLocationEnabled: true,
+            myLocationButtonEnabled: false,
+            zoomControlsEnabled: true,
 
-    return GoogleMap(
-      initialCameraPosition: posInicial ,
-      myLocationEnabled: true,
-      myLocationButtonEnabled: false,
-      zoomControlsEnabled: true,
+            onMapCreated: mapaBloc.initMapa,
 
-      onMapCreated: mapaBloc.initMapa,
+            // Esto llama el Bloc para hacer las Polylineas
+            polylines: mapaBloc.state.polylines.values.toSet(),
 
-      // Esto llama el Bloc para hacer las Polylineas
-      polylines: mapaBloc.state.polylines.values.toSet(),
 
+            onCameraMove: ( cameraPosition ) {
+                // cameraPosition.target = LatLng central del mapa
+              mapaBloc.add( OnMovioMapa( cameraPosition.target ));
+            },
     );
+      },
+    );
+
+    
   }
 }
