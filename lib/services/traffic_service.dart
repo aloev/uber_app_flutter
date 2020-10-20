@@ -1,8 +1,11 @@
 
 
 
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:primer_proyecto/helpers/debouncer.dart';
 import 'package:primer_proyecto/models/search_response.dart';
 import 'package:primer_proyecto/models/traffic_response.dart';
 
@@ -17,6 +20,16 @@ class TrafficService {
   }
 
   final _dio = new Dio();
+
+  // Llama al Helper para hacer el proceso de espera
+  final debouncer = Debouncer<String>(duration: Duration(milliseconds: 400 ));
+  
+  // Se crea un stream con su respectivo getter
+
+  final StreamController<SearchResponse> _sugerenciasStreamController = new StreamController<SearchResponse>.broadcast(); 
+  
+  Stream<SearchResponse> get sugerenciasStream => this._sugerenciasStreamController.stream;
+  
   final _baseUrlDir = 'https://api.mapbox.com/directions/v5';
   final _baseUrlGeo = 'https://api.mapbox.com/geocoding/v5';
   final _apiKey = 'pk.eyJ1IjoicHJ1ZWJhcGFnaW5hczAxIiwiYSI6ImNrZzYyeGVyODA1ZTUzNnIxbXRvM3U2NzYifQ.Qq1xLEK3Uq_ZyPu1Jjoxdw';
@@ -44,7 +57,7 @@ class TrafficService {
     return data;
   }
 
-  // Obtiene resultados producto de una busqueda
+  // Obtiene resultados- Hace Peticion
 
   Future<SearchResponse> getResultadosPorQuery( String busqueda, LatLng proximidad)async{
 
@@ -68,6 +81,27 @@ class TrafficService {
     }
     
     
+  }
+
+  // Servicio para Hacer delay en barraBusqueda
+  void getSugerenciasPorQuery( String busqueda, LatLng proximidad ) {
+
+      debouncer.value = '';
+      debouncer.onValue = ( value ) async {
+
+        // Llama al Servicio de Peticion
+        final resultados = await this.getResultadosPorQuery(value, proximidad);
+
+        // Almacena los resultados en el sugerenciaStream
+
+        this._sugerenciasStreamController.add(resultados);
+      };
+
+      final timer = Timer.periodic(Duration(milliseconds: 200), (_) {
+        debouncer.value = busqueda;
+      });
+
+      Future.delayed(Duration(milliseconds: 201)).then((_) => timer.cancel()); 
 
   }
 

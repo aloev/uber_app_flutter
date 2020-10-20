@@ -33,10 +33,11 @@ class SearchBar extends StatelessWidget {
             onTap: ()async {
 
               final proximidad = context.bloc<MiUbicacionBloc>().state.ubicacion;
+              final historial = context.bloc<BusquedaBloc>().state.historial;
 
               final resultado = await showSearch(
                 context: context, 
-                delegate: SearchDestination(proximidad));
+                delegate: SearchDestination(proximidad, historial));
                 this.retornoBusqueda(context, resultado);
             },
             child: Container(
@@ -59,7 +60,7 @@ class SearchBar extends StatelessWidget {
   }
 
 
-  void retornoBusqueda(BuildContext context, SearchResult result){
+  Future retornoBusqueda(BuildContext context, SearchResult result) async{
     if (result.cancelo) return;
 
       
@@ -67,6 +68,47 @@ class SearchBar extends StatelessWidget {
       context.bloc<BusquedaBloc>().add(OnActivarMarcadorManual());
       return;
     }
+
+    // Calcular la ruta en Base a la posicion actual
+    
+    final trafficService = new TrafficService();
+
+    // Ubicacion futuro
+    final mapaBloc = context.bloc<MapaBloc>();
+    // Ubicacion actual
+    final inicio = context.bloc<MiUbicacionBloc>().state.ubicacion;
+
+    // El result contiene coordenadas de la busqueda
+    final destino = result.position;
+
+    final drivingResponse = await trafficService.getCoordsInicioDestino(inicio, destino);
+
+    // Contiene la ruta actual
+    final geometry = drivingResponse.routes[0].geometry;
+    final duracion = drivingResponse.routes[0].duration;
+    final distancia = drivingResponse.routes[0].distance;
+
+    // Se llama a las Polylines
+
+    final points = Poly.Polyline.Decode(encodedString: geometry, precision: 6);
+
+    final List<LatLng> rutaCoordenadas = points.decodedCoords.map(
+      (point) => LatLng(point[0], point[1] )
+    ).toList();
+
+    // Hacer disparo al Bloc 
+
+    mapaBloc.add(OncrearRutaInicioDestino(rutaCoordenadas, distancia, duracion));
+
+
+    Navigator.of(context).pop();
+
+    // Agregar al Historial
+
+    final busquedaBloc = context.bloc<BusquedaBloc>();
+
+    busquedaBloc.add(OnAgregarHistorial(result));
+
   }
 
 
