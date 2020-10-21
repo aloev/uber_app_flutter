@@ -99,6 +99,10 @@ class _BuildMarcadorManual extends StatelessWidget {
     // Halla de donde sea que me haya parado para iniciar Busqueda
     final destino = mapabloc.state.ubicacionCentral;
 
+    // Obtener informacion del Destino por medio de Servicio
+
+    final reverseQueryResponse = await trafficService.getCoordenadasInfo(destino);
+
     final trafficResponse = await trafficService.getCoordsInicioDestino(inicio, destino);
     
 
@@ -106,6 +110,8 @@ class _BuildMarcadorManual extends StatelessWidget {
     final geometry = trafficResponse.routes[0].geometry;
     final duracion = trafficResponse.routes[0].duration;
     final distancia = trafficResponse.routes[0].distance;
+    final nombreDestino = reverseQueryResponse.features[0].placeName;
+   
     // Decodificar los puntos del Geometry
 
     final points = Poly.Polyline.Decode(encodedString:geometry, precision: 6 ).decodedCoords;
@@ -118,7 +124,7 @@ class _BuildMarcadorManual extends StatelessWidget {
     
     
     // Dispara Evento, manda nuevas coordenadas
-    mapabloc.add( OncrearRutaInicioDestino(rutaCoordenadas,distancia,duracion ) );
+    mapabloc.add( OncrearRutaInicioDestino(rutaCoordenadas,distancia,duracion,nombreDestino ) );
 
 
     // Cierra y Desactiva

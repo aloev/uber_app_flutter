@@ -15,8 +15,9 @@ class OncrearRutaInicioDestino extends MapaEvent{
   final List<LatLng> rutaCoordenadas;
   final double  distance;
   final double  duracion;
+  final String nombreDestino;
 
-  OncrearRutaInicioDestino(this.rutaCoordenadas, this.distance, this.duracion);
+  OncrearRutaInicioDestino(this.rutaCoordenadas, this.distance, this.duracion, this.nombreDestino);
 }
 
 

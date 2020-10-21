@@ -100,6 +100,8 @@ class _MapaPageState extends State<MapaPage> {
             // Esto llama el Bloc para hacer las Polylineas
             polylines: mapaBloc.state.polylines.values.toSet(),
 
+            // A poner los Markers
+            markers: mapaBloc.state.markers.values.toSet(),
 
             onCameraMove: ( cameraPosition ) {
                 // cameraPosition.target = LatLng central del mapa

@@ -24,10 +24,12 @@ class BusquedaBloc extends Bloc<BusquedaEvent, BusquedaState> {
 
     } else if(event is OnAgregarHistorial){
 
+      // Se compara evento con state para ver si existe 
       final existe = state.historial.where(
       (result) => result.nombreDestino == event.result.nombreDestino 
       ).length;
 
+      // Si no existe queremos que desestructure y guarde el nuevo
       if( existe == 0 ){
         final newHistorial = [ ...state.historial, event.result ];
 
