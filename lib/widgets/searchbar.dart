@@ -73,7 +73,6 @@ class SearchBar extends StatelessWidget {
       context.bloc<BusquedaBloc>().add(OnActivarMarcadorManual());
       return;
     }
-
     // Calcular la ruta en Base a la posicion actual
     
     final trafficService = new TrafficService();
@@ -92,6 +91,7 @@ class SearchBar extends StatelessWidget {
     final geometry = drivingResponse.routes[0].geometry;
     final duracion = drivingResponse.routes[0].duration;
     final distancia = drivingResponse.routes[0].distance;
+    final nombreDestino = result.nombreDestino;
 
     // Se llama a las Polylines
 
@@ -101,10 +101,11 @@ class SearchBar extends StatelessWidget {
       (point) => LatLng(point[0], point[1] )
     ).toList();
 
+
     // Hacer disparo al Bloc 
 
     // TODO: Arreglar 
-    // mapaBloc.add(OncrearRutaInicioDestino(rutaCoordenadas, distancia, duracion));
+    mapaBloc.add(OncrearRutaInicioDestino(rutaCoordenadas, distancia, duracion, nombreDestino));
 
     // Cierra interfaz actual
     Navigator.of(context).pop();
@@ -114,7 +115,7 @@ class SearchBar extends StatelessWidget {
     final busquedaBloc = context.bloc<BusquedaBloc>();
 
     busquedaBloc.add(OnAgregarHistorial(result));
-
+    print('adiosss');
   }
 
 

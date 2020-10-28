@@ -10,6 +10,7 @@ import 'package:primer_proyecto/pages/mapa_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:primer_proyecto/bloc/mi_ubicacion/mi_ubicacion_bloc.dart';
 import 'package:primer_proyecto/bloc/mapa/mapa_bloc.dart';
+import 'package:primer_proyecto/pages/test_marker_page.dart';
 
 void main() => runApp(MyApp());
  
@@ -25,12 +26,13 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Material App',
-        home: LoadingPage(),
+        home: TestMarkerPage(),
         // home: AccesoGpsPage(),
         routes: {
           'mapa'       : (_) => MapaPage(),
           'loading'    : (_) => LoadingPage(),
           'acceso_gps' : (_) => AccesoGpsPage(),
+          'test' : (_) => TestMarkerPage(),
           
         },
       ),

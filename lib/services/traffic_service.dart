@@ -65,6 +65,8 @@ class TrafficService {
     final url = '${this._baseUrlGeo}/mapbox.places/$busqueda.json';
     
     try {
+
+      print('holaaaa');
       final resp = await this._dio.get(url, queryParameters: {
 
         'access_token' : this._apiKey,
@@ -73,9 +75,11 @@ class TrafficService {
         'language'     : 'es',
       });
 
+      print(resp);
 
       final searchResponse = searchResponseFromJson(resp.data);
 
+      print(searchResponse);
       return searchResponse;
     } catch (e) {
       return SearchResponse(features: []);
@@ -120,8 +124,9 @@ class TrafficService {
     });
 
     
+    
     final data  = reverseQueryResponseFromJson(resp.data);
-   
+    print(data);
     return data;
   }
 

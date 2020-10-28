@@ -110,7 +110,7 @@ class _BuildMarcadorManual extends StatelessWidget {
     final geometry = trafficResponse.routes[0].geometry;
     final duracion = trafficResponse.routes[0].duration;
     final distancia = trafficResponse.routes[0].distance;
-    final nombreDestino = reverseQueryResponse.features[0].placeName;
+    final nombreDestino = reverseQueryResponse.features[0].text;
    
     // Decodificar los puntos del Geometry
 
