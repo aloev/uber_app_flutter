@@ -46,6 +46,9 @@ class _LoadingPageState extends State<LoadingPage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+
+    // Just to make sure I'm uploading
+
     return Scaffold(
       body: FutureBuilder(
         future: this.checkGpsYLocation(context),
