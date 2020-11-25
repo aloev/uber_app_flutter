@@ -1,52 +1,43 @@
 part of 'mapa_bloc.dart';
 
 @immutable
-class MapaState{
-
-      // Propiedades de la Clase
-
-  final bool mapaListo;
-
-  final bool dibujarRecorrido;
-
-  final LatLng ubicacionCentral;
+class MapaState {
   
+  final bool mapaListo;
+  final bool dibujarRecorrido;
   final bool seguirUbicacion;
 
-  // Polylines  -- La mas importante
+  final LatLng ubicacionCentral;
 
-  final Map<String, Polyline > polylines;
-  
-  final Map<String, Marker > markers;
-
-    // Constructor
+  // Polylines
+  final Map<String, Polyline> polylines;
+  final Map<String, Marker> markers;
 
   MapaState({
-    this.ubicacionCentral, 
-    this.dibujarRecorrido = false,
     this.mapaListo = false,
+    this.dibujarRecorrido = false,
     this.seguirUbicacion = false,
-    Map<String, Polyline > polylines,
-    Map<String, Marker > markers,
+    this.ubicacionCentral,
+    Map<String, Polyline> polylines,
+    Map<String, Marker> markers
   }): this.polylines = polylines ?? new Map(),
       this.markers = markers ?? new Map();
 
-  // Modificar el estado - por medio de CopyWiths
 
   MapaState copyWith({
     bool mapaListo,
     bool dibujarRecorrido,
     bool seguirUbicacion,
     LatLng ubicacionCentral,
-    Map<String, Polyline > polylines,
-    Map<String, Marker > markers,
+    Map<String, Polyline> polylines,
+    Map<String, Marker> markers
   }) => MapaState(
     mapaListo: mapaListo ?? this.mapaListo,
     polylines: polylines ?? this.polylines,
-    markers: markers ?? this.markers,
-    seguirUbicacion: seguirUbicacion ?? this.seguirUbicacion,
-    dibujarRecorrido: dibujarRecorrido ?? this.dibujarRecorrido,
-    ubicacionCentral: ubicacionCentral ?? this.ubicacionCentral
+    markers  : markers ?? this.markers,
+    ubicacionCentral : ubicacionCentral ?? this.ubicacionCentral,
+    seguirUbicacion  : seguirUbicacion ?? this.seguirUbicacion,
+    dibujarRecorrido : dibujarRecorrido ?? this.dibujarRecorrido,
   );
 
 }

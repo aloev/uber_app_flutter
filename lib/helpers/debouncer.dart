@@ -6,16 +6,12 @@ class Debouncer<T> {
 
   Debouncer({ this.duration, this.onValue });
 
-  // Establece el tiempo
-
   final Duration duration;
   void Function(T value) onValue;
   T _value;
   Timer _timer;
   
   T get value => _value;
-
-  // Establece la duracion
 
   set value(T val) {
     _value = val;

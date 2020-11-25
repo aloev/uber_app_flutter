@@ -1,133 +1,116 @@
-
-
-
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart' show LatLng;
 import 'package:primer_proyecto/helpers/debouncer.dart';
 import 'package:primer_proyecto/models/reverse_query_response.dart';
 import 'package:primer_proyecto/models/search_response.dart';
 import 'package:primer_proyecto/models/traffic_response.dart';
 
+
+
+// import 'package:mapa_app/helpers/debouncer.dart';
+// import 'package:mapa_app/models/reverse_query_response.dart';
+
+// import 'package:mapa_app/models/search_response.dart';
+// import 'package:mapa_app/models/traffic_response.dart';
+
 class TrafficService {
 
   // Singleton
   TrafficService._privateConstructor();
-
   static final TrafficService _instance = TrafficService._privateConstructor();
   factory TrafficService(){
     return _instance;
   }
 
   final _dio = new Dio();
-
-  // Llama al Helper para hacer el proceso de espera
   final debouncer = Debouncer<String>(duration: Duration(milliseconds: 400 ));
-  
-  // Se crea un stream con su respectivo getter
 
-  final StreamController<SearchResponse> _sugerenciasStreamController = new StreamController<SearchResponse>.broadcast(); 
-  
+  final StreamController<SearchResponse> _sugerenciasStreamController = new StreamController<SearchResponse>.broadcast();
   Stream<SearchResponse> get sugerenciasStream => this._sugerenciasStreamController.stream;
-  
+
+
   final _baseUrlDir = 'https://api.mapbox.com/directions/v5';
   final _baseUrlGeo = 'https://api.mapbox.com/geocoding/v5';
-  final _apiKey = 'pk.eyJ1IjoicHJ1ZWJhcGFnaW5hczAxIiwiYSI6ImNrZzYyeGVyODA1ZTUzNnIxbXRvM3U2NzYifQ.Qq1xLEK3Uq_ZyPu1Jjoxdw';
+  final _apiKey  = 'pk.eyJ1IjoicHJ1ZWJhcGFnaW5hczAxIiwiYSI6ImNrZzYyeGVyODA1ZTUzNnIxbXRvM3U2NzYifQ.Qq1xLEK3Uq_ZyPu1Jjoxdw';
 
+  Future<DrivingResponse> getCoordsInicioYDestino( LatLng inicio, LatLng destino ) async {
 
-  // Genera polylines entre Origen y Destino
-
-  Future<DrivingResponse> getCoordsInicioDestino(LatLng inicio, LatLng destino) async{
-    
-    final coordString = '${inicio.longitude},${inicio.latitude};${destino.longitude},${destino.latitude}';
-    final url = '${this._baseUrlDir}/mapbox/driving/$coordString';
+    final coordString = '${ inicio.longitude },${ inicio.latitude };${ destino.longitude },${ destino.latitude }';
+    final url = '${ this._baseUrlDir }/mapbox/driving/$coordString';
 
     final resp = await this._dio.get( url, queryParameters: {
-
-      'alternatives' :  'true',
-      'geometries'   : 'polyline6',
-      'steps'        : 'false',
-      'access_token' :  this._apiKey,
-      'language'     : 'es',
+      'alternatives': 'true',
+      'geometries': 'polyline6',
+      'steps': 'false',
+      'access_token': this._apiKey,
+      'language': 'es',
     });
 
     final data = DrivingResponse.fromJson(resp.data);
 
-   
     return data;
+
   }
 
-  // Obtiene resultados- Hace Peticion
+  Future<SearchResponse> getResultadosPorQuery( String busqueda, LatLng proximidad ) async {
 
-  Future<SearchResponse> getResultadosPorQuery( String busqueda, LatLng proximidad)async{
+    print('Buscando!!!!!');
 
-    final url = '${this._baseUrlGeo}/mapbox.places/$busqueda.json';
-    
+    final url = '${ this._baseUrlGeo }/mapbox.places/$busqueda.json';
+
     try {
+        final resp = await this._dio.get(url, queryParameters: {
+          'access_token': this._apiKey,
+          'autocomplete': 'true',
+          'proximity'   : '${ proximidad.longitude },${ proximidad.latitude }',
+          'language'    : 'es',
+        });
 
-      print('holaaaa');
-      final resp = await this._dio.get(url, queryParameters: {
+        final searchResponse = searchResponseFromJson( resp.data );
 
-        'access_token' : this._apiKey,
-        'autocomplete' : 'true',
-        'proximity'    : '${proximidad.longitude},${proximidad.latitude}',
-        'language'     : 'es',
-      });
+        return searchResponse;
 
-      print(resp);
-
-      final searchResponse = searchResponseFromJson(resp.data);
-
-      print(searchResponse);
-      return searchResponse;
     } catch (e) {
-      return SearchResponse(features: []);
+      return SearchResponse( features: [] );
     }
-    
-    
+
+  
   }
 
-  // Servicio para Hacer delay en barraBusqueda
   void getSugerenciasPorQuery( String busqueda, LatLng proximidad ) {
 
-      debouncer.value = '';
-      debouncer.onValue = ( value ) async {
+    debouncer.value = '';
+    debouncer.onValue = ( value ) async {
+      final resultados = await this.getResultadosPorQuery(value, proximidad);
+      this._sugerenciasStreamController.add(resultados);
+    };
 
-        // Llama al Servicio de Peticion
-        final resultados = await this.getResultadosPorQuery(value, proximidad);
-
-        // Almacena los resultados en el sugerenciaStream
-
-        this._sugerenciasStreamController.add(resultados);
-      };
-
-      final timer = Timer.periodic(Duration(milliseconds: 200), (_) {
-        debouncer.value = busqueda;
-      });
-
-      Future.delayed(Duration(milliseconds: 201)).then((_) => timer.cancel()); 
-
-  }
-
-  // Identificar los lugares donde ponemos pointers de destino
-
-  Future<ReverseQueryResponse> getCoordenadasInfo( LatLng destinoCoords )async{
-    
-    
-    final url = '${this._baseUrlGeo}/mapbox.places/${destinoCoords.longitude},${destinoCoords.latitude}.json';
-
-    final resp = await this._dio.get( url, queryParameters: {
-
-      'access_token' :  this._apiKey,
-      'language'     : 'es',
+    final timer = Timer.periodic(Duration(milliseconds: 200), (_) {
+      debouncer.value = busqueda;
     });
 
-    
-    
-    final data  = reverseQueryResponseFromJson(resp.data);
-    print(data);
-    return data;
+    Future.delayed(Duration(milliseconds: 201)).then((_) => timer.cancel()); 
+
   }
 
+  Future<ReverseQueryResponse> getCoordenadasInfo( LatLng destinoCoords ) async {
+
+    final url = '${ this._baseUrlGeo }/mapbox.places/${ destinoCoords.longitude },${ destinoCoords.latitude }.json';
+
+    final resp = await this._dio.get( url, queryParameters: {
+      'access_token': this._apiKey,
+      'language': 'es',
+    });
+
+    final data = reverseQueryResponseFromJson( resp.data );
+
+    return data;
+
+
+  }
+
+
 }
+

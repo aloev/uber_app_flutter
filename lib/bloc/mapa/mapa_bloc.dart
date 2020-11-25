@@ -3,9 +3,11 @@ import 'dart:convert';
 
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart' show Colors, Offset;
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+// import 'package:mapa_app/helpers/helpers.dart';
 import 'package:meta/meta.dart';
-import 'package:primer_proyecto/bloc/mi_ubicacion/mi_ubicacion_bloc.dart' ;
+
+// import 'package:mapa_app/themes/uber_map_theme.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:primer_proyecto/helpers/helpers.dart';
 import 'package:primer_proyecto/theme/uber_map_theme.dart';
 
@@ -13,148 +15,109 @@ part 'mapa_event.dart';
 part 'mapa_state.dart';
 
 class MapaBloc extends Bloc<MapaEvent, MapaState> {
-  MapaBloc() : super(MapaState());
 
+  MapaBloc() : super( new MapaState() );
 
-  // Controlador del Mapa
+  // Controlador del mapa
   GoogleMapController _mapController;
 
-  // Polylines -- Una que siempre sigue, Otra apenas Click
-
+  // Polylines
   Polyline _miRuta = new Polyline(
-    polylineId: PolylineId('mi_ruta') ,
+    polylineId: PolylineId('mi_ruta'),
     width: 4,
     color: Colors.transparent,
   );
 
   Polyline _miRutaDestino = new Polyline(
-    polylineId: PolylineId('mi_ruta_destino') ,
+    polylineId: PolylineId('mi_ruta_destino'),
     width: 4,
     color: Colors.black87,
   );
 
-
-  // Inicia Mapa Style Uber
-  void initMapa( GoogleMapController controller){
-
-    if( !state.mapaListo ){
-
+  void initMapa( GoogleMapController controller ) {
+    if ( !state.mapaListo ) {
       this._mapController = controller;
-
       this._mapController.setMapStyle( jsonEncode(uberMapTheme) );
-      
 
-      add(OnMapaListo());  
-
+      add( OnMapaListo() );
     }
   }
-  // Le asigna al controller de Google el nuevo destino
-  void moverCamara( LatLng destino ){
-    
-    final cameraUpdate = CameraUpdate.newLatLng(destino);
 
+  void moverCamara( LatLng destino ) {
+    final cameraUpdate = CameraUpdate.newLatLng(destino);
     this._mapController?.animateCamera(cameraUpdate);
   }
 
 
   @override
-  Stream<MapaState> mapEventToState( MapaEvent event, ) async* {
+  Stream<MapaState> mapEventToState( MapaEvent event ) async* {
     
-    if( event is OnMapaListo){
-      yield state.copyWith( mapaListo: true);
-    
-    } else if( event is OnNuevaUbicacion ){
+    if ( event is OnMapaListo ) {
+      yield state.copyWith( mapaListo: true );
 
-      // Regrese Todos puntos + Nueva Ubicacion => Propiedad Polyline
+    } else if ( event is OnNuevaUbicacion ) {
+      yield* this._onNuevaUbicacion( event );
 
-      yield* this._onNuevaUbicacion(event);
-    
-    } else if( event is OnMarcarRecorrido ){
+    } else if ( event is OnMarcarRecorrido ) {
+      yield* this._onMarcarRecorrido( event );
 
-        // Cambiar color a _miRuta que es la q me sigue always
-      yield* _onMarcarRecorrido(event);
-      
-    } else if ( event is OnSeguirUbicacion){
+    } else if ( event is OnSeguirUbicacion ) {
+      yield* this._onSeguirUbicacion( event );
 
-      yield* this._onSeguirUbicacion(event);
-     
-    } else if ( event is OnMovioMapa){
+    } else if ( event is OnMovioMapa ) {
+      yield state.copyWith( ubicacionCentral: event.centroMapa );
 
-      yield state.copyWith(ubicacionCentral:event.centroMapa);
-
-    } else if ( event is OncrearRutaInicioDestino){
-
-      yield* _oncrearRutaInicioDestino(event);
+    } else if ( event is OnCrearRutaInicioDestino ) {
+      yield* _onCrearRutaInicioDestino( event );
     }
+
   }
+  
+  Stream<MapaState> _onNuevaUbicacion( OnNuevaUbicacion event ) async* {
 
-
-   // Funciones Optimizadoras
-
-  Stream<MapaState> _onMarcarRecorrido(OnMarcarRecorrido event) async* {
-    if( state.dibujarRecorrido ){
-
-      this._miRuta = this._miRuta.copyWith( colorParam: Colors.black87  );
-    } else {
-      this._miRuta = this._miRuta.copyWith( colorParam: Colors.transparent  );
+    if ( state.seguirUbicacion ) {
+      this.moverCamara( event.ubicacion );
     }
+
+
+    final points = [ ...this._miRuta.points, event.ubicacion ];
+    this._miRuta = this._miRuta.copyWith( pointsParam: points );
+
     final currentPolylines = state.polylines;
-    
-    // Reescribo los puntos RESULTANDES a mi Polyline
     currentPolylines['mi_ruta'] = this._miRuta;
 
-    yield state.copyWith(
+    yield state.copyWith( polylines: currentPolylines );
+
+  }
+
+  Stream<MapaState> _onMarcarRecorrido( OnMarcarRecorrido event ) async* {
+
+    if ( !state.dibujarRecorrido ) {
+      this._miRuta = this._miRuta.copyWith( colorParam: Colors.black87 );
+    } else {
+      this._miRuta = this._miRuta.copyWith( colorParam: Colors.transparent );
+    }
+
+    final currentPolylines = state.polylines;
+    currentPolylines['mi_ruta'] = this._miRuta;
+
+    yield state.copyWith( 
       dibujarRecorrido: !state.dibujarRecorrido,
-      polylines:currentPolylines 
+      polylines: currentPolylines
     );
-  }
-
-
-  Stream<MapaState> _onNuevaUbicacion(OnNuevaUbicacion event ) async* {
-
-
-      if( state.seguirUbicacion){
-
-        // Obtengo la Ubicacion actual del state
-        final destino = event.ubicacion;
-
-        // Muevo el foco
-
-        this.moverCamara(destino);
-      }
-
-
-      // Armo puntos viejos mas Nuevos - Polyline + Nueva Ubicacion
-      final points = [ ...this._miRuta.points, event.ubicacion ];
-      
-      // Creo una COPIA de estos Mismos
-      this._miRuta = this._miRuta.copyWith( pointsParam: points);
-
-      // 
-      final currentPolylines = state.polylines;
-      
-      // Reescribo los puntos RESULTANDES a mi Polyline
-      currentPolylines['mi_ruta'] = this._miRuta;
-
-      // Regresa puntos Antiguos + nuevaUbicacion
-      yield state.copyWith(polylines:currentPolylines );
-  }
-
-  Stream<MapaState> _onSeguirUbicacion(OnSeguirUbicacion event)async*{
-      
-      // Revisar
-      if( !state.seguirUbicacion){
-        this.moverCamara(this._miRuta.points[this._miRuta.points.length-1]);
-      }
-
-      yield state.copyWith(seguirUbicacion: !state.seguirUbicacion);
-
 
   }
 
+  Stream<MapaState> _onSeguirUbicacion( OnSeguirUbicacion event ) async* {
 
-  Stream<MapaState> _oncrearRutaInicioDestino( OncrearRutaInicioDestino event) async*{
-    
+    if ( !state.seguirUbicacion ) {
+      this.moverCamara( this._miRuta.points[ this._miRuta.points.length - 1 ] );
+    }
+    yield state.copyWith( seguirUbicacion: !state.seguirUbicacion );
+  }
+
+  Stream<MapaState> _onCrearRutaInicioDestino( OnCrearRutaInicioDestino event ) async* {
+
     this._miRutaDestino = this._miRutaDestino.copyWith(
       pointsParam: event.rutaCoordenadas
     );
@@ -162,58 +125,55 @@ class MapaBloc extends Bloc<MapaEvent, MapaState> {
     final currentPolylines = state.polylines;
     currentPolylines['mi_ruta_destino'] = this._miRutaDestino;
 
-    // Icono Inicio - Final
+    // Icono inicio
+    // final iconInicio  = await getAssetImageMarker();
+    final iconInicio  = await getMarkerInicioIcon( event.duracion.toInt() );
 
-    final iconInicio = await getAssetImageMarker();
-    final iconDestino = await getNetworkImageMarker();
+    final iconDestino = await getMarkerDestinoIcon(event.nombreDestino, event.distancia);
+    // final iconDestino = await getNetworkImageMarker();
 
-
-    // Marcadores - Inicio
-
+    // Marcadores
     final markerInicio = new Marker(
-      markerId: MarkerId('inicio'), 
-      position: event.rutaCoordenadas[0] ,   // Berraquera las rutaCoordenadas
+      anchor: Offset(0.0, 1.0),
+      markerId: MarkerId('inicio'),
+      position: event.rutaCoordenadas[0],
       icon: iconInicio,
       infoWindow: InfoWindow(
-        title: 'Mi Ubicacion',
-        snippet: 'Duracion recorrido: ${(event.duracion/ 60).floor() } minutos',
-
-      ),
+        title: 'Mi Ubicación',
+        snippet: 'Duración recorrido: ${ (event.duracion / 60).floor() } minutos',
+      )
     );
 
-    // Marcadores - final
+    double kilometros = event.distancia / 1000;
+    kilometros = (kilometros * 100).floor().toDouble();
+    kilometros = kilometros / 100;
 
-    // double kilometros = event.distance / 1000;
-    // kilometros = (kilometros * 100).floor().toDouble();
-    // kilometros = kilometros/100;
-    final markerFinal = new Marker(
+    final markerDestino = new Marker(
       markerId: MarkerId('destino'),
-      position: event.rutaCoordenadas[event.rutaCoordenadas.length - 1],
+      position: event.rutaCoordenadas[ event.rutaCoordenadas.length - 1 ],
       icon: iconDestino,
+      anchor: Offset(0.1, 0.90),
       infoWindow: InfoWindow(
-        title: 'Mi Recorrido',
-        // snippet: 'Distancia recorrido: $kilometros Km',
-
-      ),
+        title: event.nombreDestino,
+        snippet: 'Distancia: $kilometros Km',
+      )
     );
 
     final newMarkers = { ...state.markers };
-    // final newMarkers = Map.from(state.markers);
-    newMarkers['inicio'] = markerInicio;
-    newMarkers['destino'] = markerFinal;
+    newMarkers['inicio']  = markerInicio;
+    newMarkers['destino'] = markerDestino;
 
     Future.delayed(Duration(milliseconds: 300)).then(
       (value) {
         // _mapController.showMarkerInfoWindow(MarkerId('inicio'));
         // _mapController.showMarkerInfoWindow(MarkerId('destino'));
-      });
+      }
+    );
+
 
     yield state.copyWith(
       polylines: currentPolylines,
-      // TODO: Marcadores
-
       markers: newMarkers
-
     );
   }
 

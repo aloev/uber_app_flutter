@@ -1,7 +1,5 @@
-
-
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart' as handler;
+import 'package:permission_handler/permission_handler.dart';
 
 
 class AccesoGpsPage extends StatefulWidget {
@@ -10,11 +8,14 @@ class AccesoGpsPage extends StatefulWidget {
   _AccesoGpsPageState createState() => _AccesoGpsPageState();
 }
 
-class _AccesoGpsPageState extends State<AccesoGpsPage> with WidgetsBindingObserver{
+class _AccesoGpsPageState extends State<AccesoGpsPage> with WidgetsBindingObserver {
+
+  bool popup = false;
 
 
   @override
   void initState() {
+    
     WidgetsBinding.instance.addObserver(this);
     super.initState();
   }
@@ -26,14 +27,15 @@ class _AccesoGpsPageState extends State<AccesoGpsPage> with WidgetsBindingObserv
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) async {
+  void didChangeAppLifecycleState(AppLifecycleState state) async{
     
-    if ( state == AppLifecycleState.resumed){
-
-      if( await handler.Permission.location.isGranted){
+    if (  state == AppLifecycleState.resumed && !popup ) {
+      if ( await Permission.location.isGranted  ) {
         Navigator.pushReplacementNamed(context, 'loading');
       }
     }
+
+
   }
 
 
@@ -47,40 +49,41 @@ class _AccesoGpsPageState extends State<AccesoGpsPage> with WidgetsBindingObserv
             Text('Es necesario el GPS para usar esta app'),
 
             MaterialButton(
-              child: Text('Solicitar Acceso', style: TextStyle(color: Colors.white),),
+              child: Text('Solicitar Acceso', style: TextStyle( color: Colors.white )),
               color: Colors.black,
               shape: StadiumBorder(),
-              onPressed: () async{ 
+              elevation: 0,
+              splashColor: Colors.transparent,
+              onPressed: () async {
+                popup = true;
+                final status = await Permission.location.request();
+                await this.accesoGPS( status );
 
-                //TODO: verificar permisos
-                final status = await handler.Permission.location.request(); 
+                popup = false;
 
-                this.accesoGPS(status);
-                // print(status);
-              },
-              
+              }
             )
           ],
-        ),
+        )
      ),
    );
   }
 
-  void accesoGPS( handler.PermissionStatus status){
-
-    switch (status) {
+  Future accesoGPS( PermissionStatus status ) async {
 
 
-      case handler.PermissionStatus.granted:
-        Navigator.pushReplacementNamed(context, 'mapa');
+    switch ( status ) {
+      
+      case PermissionStatus.granted:
+        await Navigator.pushReplacementNamed(context, 'loading');
         break;
-      case handler.PermissionStatus.denied:
-      case handler.PermissionStatus.restricted:
-      case handler.PermissionStatus.permanentlyDenied:
-
-        handler.openAppSettings();
-
+        
+      case PermissionStatus.undetermined:
+      case PermissionStatus.denied:
+      case PermissionStatus.restricted:
+      case PermissionStatus.permanentlyDenied:
+        openAppSettings();
     }
-
+    
   }
 }

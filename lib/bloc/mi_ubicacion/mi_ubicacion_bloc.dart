@@ -1,64 +1,57 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
-import 'package:geolocator/geolocator.dart' as Geolocator;
 import 'package:meta/meta.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart' as Geolocator;
+import 'package:google_maps_flutter/google_maps_flutter.dart' show LatLng;
 
 part 'mi_ubicacion_event.dart';
 part 'mi_ubicacion_state.dart';
 
 class MiUbicacionBloc extends Bloc<MiUbicacionEvent, MiUbicacionState> {
+  
+  MiUbicacionBloc() : super(MiUbicacionState());
 
-  MiUbicacionBloc() : super( MiUbicacionState());
-
-  // ignore: cancel_subscriptions
+  // Geolocator
+  // final _geolocator = new Geolocator();
   StreamSubscription<Geolocator.Position> _positionSubscription;
 
-  void iniciarSeguimiento(){
 
-    // final geoLocatorOptions = Geolocator.LocationOptions(
-    //   accuracy: Geolocator.LocationAccuracy.high,
+  void iniciarSeguimiento() {
+
+    // final locationOptions = LocationOptions(
+    //   accuracy: LocationAccuracy.high,
     //   distanceFilter: 10
     // );
 
-    this._positionSubscription = Geolocator.getPositionStream(
+    // _positionSubscription = Geolocator.getPositionStream(locationOptions).listen(( Position position ) {
+     this._positionSubscription = Geolocator.getPositionStream(
 
       desiredAccuracy: Geolocator.LocationAccuracy.high,
       distanceFilter: 10
 
     ).listen((Geolocator.Position position) { 
 
-      // print(position);   //En este punto ya conozco mi ubicacion actual
-
-      final newLocacion = new LatLng(position.latitude, position.longitude);
-
-
-        // Le entrega al evento mi posicion ACTUAL
-      add( OnUbicacionCambio( newLocacion ) );        // Dispara un Evento
-    
+      final nuevaUbicacion = new LatLng(position.latitude, position.longitude);
+      add( OnUbicacionCambio( nuevaUbicacion ) );
     });
 
   }
 
-
-  void cancelarSeguimiento(){
-
-    this._positionSubscription?.cancel();
+  void cancelarSeguimiento() {
+    _positionSubscription?.cancel();
   }
 
 
-  // Reasignacion al Estado de La UBICACION hallada
-
   @override
-  Stream<MiUbicacionState> mapEventToState( MiUbicacionEvent event, ) async* {
+  Stream<MiUbicacionState> mapEventToState( MiUbicacionEvent event ) async* {
     
-    if( event is OnUbicacionCambio){
-      // print(event);
+    if ( event is OnUbicacionCambio ) {
       yield state.copyWith(
         existeUbicacion: true,
         ubicacion: event.ubicacion
       );
     }
+
   }
 }
